@@ -4,16 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User } from "lucide-react";
+import { User, Mail, Phone, MapPin, Zap, Bell, Shield, Settings } from "lucide-react";
 
 const Profile = () => {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({ full_name: "", phone: "", address: "", meter_number: "" });
+  const [notifications, setNotifications] = useState({
+    email: true,
+    sms: false,
+    billReminder: true,
+    usageAlerts: true
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -29,40 +39,198 @@ const Profile = () => {
     setLoading(true);
     const { error } = await supabase.from("profiles").update(profile).eq("user_id", user.id);
     setLoading(false);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Success", description: "Profile updated successfully" });
+    if (error) toast({ title: t("error"), description: error.message, variant: "destructive" });
+    else toast({ title: t("success"), description: language === "ur" ? "پروفائل کامیابی سے اپ ڈیٹ ہو گیا" : "Profile updated successfully" });
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 max-w-4xl">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Profile</h1>
-          <p className="text-muted-foreground">Manage your account settings</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("profile")}</h1>
+          <p className="text-muted-foreground">{t("accountSettings")}</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-primary" />
+        {/* Profile Header */}
+        <Card className="overflow-hidden">
+          <div className="h-24 bg-gradient-to-r from-primary via-primary/80 to-accent" />
+          <CardContent className="relative pt-0 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
+              <div className="w-24 h-24 bg-card rounded-2xl border-4 border-card shadow-lg flex items-center justify-center">
+                <User className="w-12 h-12 text-primary" />
               </div>
-              <div>
-                <CardTitle>{profile.full_name || "User"}</CardTitle>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
+              <div className="flex-1 pb-2">
+                <h2 className="text-xl font-bold text-foreground">{profile.full_name || "User"}</h2>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                  <Mail className="w-4 h-4" />
+                  {user?.email}
+                </p>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Full Name</Label><Input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} /></div>
-              <div className="space-y-2"><Label>Phone</Label><Input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="+92 300 1234567" /></div>
-              <div className="space-y-2"><Label>Address</Label><Input value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} placeholder="Your address" /></div>
-              <div className="space-y-2"><Label>Meter Number</Label><Input value={profile.meter_number} onChange={(e) => setProfile({ ...profile, meter_number: e.target.value })} placeholder="e.g., 12345678" /></div>
-            </div>
-            <Button onClick={handleSave} disabled={loading}>{loading ? "Saving..." : "Save Changes"}</Button>
           </CardContent>
         </Card>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Personal Information */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                <User className="w-5 h-5 text-primary" />
+                {t("personalInfo")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  {t("fullName")}
+                </Label>
+                <Input 
+                  value={profile.full_name} 
+                  onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} 
+                  placeholder={language === "ur" ? "آپ کا نام" : "Your name"}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-muted-foreground" />
+                  {t("phone")}
+                </Label>
+                <Input 
+                  value={profile.phone} 
+                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })} 
+                  placeholder="+92 300 1234567" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  {t("address")}
+                </Label>
+                <Input 
+                  value={profile.address} 
+                  onChange={(e) => setProfile({ ...profile, address: e.target.value })} 
+                  placeholder={language === "ur" ? "آپ کا پتہ" : "Your address"} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-muted-foreground" />
+                  {t("meterNumber")}
+                </Label>
+                <Input 
+                  value={profile.meter_number} 
+                  onChange={(e) => setProfile({ ...profile, meter_number: e.target.value })} 
+                  placeholder="e.g., 12345678" 
+                />
+              </div>
+              <Button onClick={handleSave} disabled={loading} className="w-full">
+                {loading ? t("loading") : t("saveChanges")}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Notifications & Security */}
+          <div className="space-y-6">
+            {/* Notifications */}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-warning" />
+                  {t("notifications")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">{t("emailNotifications")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "ur" ? "بل اور اپ ڈیٹس ای میل پر" : "Bills and updates via email"}
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={notifications.email} 
+                    onCheckedChange={(checked) => setNotifications({...notifications, email: checked})}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">{t("smsNotifications")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "ur" ? "اہم الرٹس SMS پر" : "Important alerts via SMS"}
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={notifications.sms} 
+                    onCheckedChange={(checked) => setNotifications({...notifications, sms: checked})}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {language === "ur" ? "بل کی یاد دہانی" : "Bill Reminders"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "ur" ? "آخری تاریخ سے پہلے" : "Before due dates"}
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={notifications.billReminder} 
+                    onCheckedChange={(checked) => setNotifications({...notifications, billReminder: checked})}
+                  />
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {language === "ur" ? "استعمال الرٹس" : "Usage Alerts"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {language === "ur" ? "زیادہ استعمال کی صورت میں" : "When usage exceeds threshold"}
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={notifications.usageAlerts} 
+                    onCheckedChange={(checked) => setNotifications({...notifications, usageAlerts: checked})}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Security */}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-success" />
+                  {t("securitySettings")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Button variant="outline" className="w-full justify-start">
+                  <Shield className="w-4 h-4 mr-2" />
+                  {t("changePassword")}
+                </Button>
+                <div className="p-4 bg-success/5 border border-success/20 rounded-xl">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
+                      <Shield className="w-4 h-4 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {language === "ur" ? "اکاؤنٹ محفوظ" : "Account Secured"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {language === "ur" ? "آخری لاگ ان: آج" : "Last login: Today"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
