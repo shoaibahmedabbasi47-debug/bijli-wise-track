@@ -1,11 +1,27 @@
 import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Zap, TrendingUp, Receipt, AlertTriangle, Lightbulb, Calendar } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { 
+  Zap, 
+  TrendingUp, 
+  Receipt, 
+  AlertTriangle, 
+  Lightbulb, 
+  Calendar,
+  Bell,
+  AirVent,
+  Tv,
+  Refrigerator,
+  Fan,
+  WashingMachine,
+  AlertCircle,
+  Clock
+} from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 import { format } from "date-fns";
 
 interface UsageRecord {
@@ -67,7 +83,6 @@ const Dashboard = () => {
     fetchData();
   }, [user]);
 
-  // Demo data for visualization
   const demoChartData = [
     { name: "Mon", units: 45 },
     { name: "Tue", units: 52 },
@@ -85,6 +100,38 @@ const Dashboard = () => {
     { month: "Oct", amount: 5500 },
     { month: "Nov", amount: 4200 },
     { month: "Dec", amount: 4800 },
+  ];
+
+  const applianceData = [
+    { name: language === "ur" ? "اے سی" : "AC", value: 45, icon: AirVent, color: "hsl(var(--primary))" },
+    { name: language === "ur" ? "فریج" : "Fridge", value: 20, icon: Refrigerator, color: "hsl(var(--accent))" },
+    { name: language === "ur" ? "ٹی وی" : "TV", value: 15, icon: Tv, color: "hsl(var(--warning))" },
+    { name: language === "ur" ? "واشنگ مشین" : "Washing", value: 12, icon: WashingMachine, color: "hsl(var(--info))" },
+    { name: language === "ur" ? "پنکھے" : "Fans", value: 8, icon: Fan, color: "hsl(var(--success))" },
+  ];
+
+  const alerts = [
+    { 
+      type: "warning", 
+      title: language === "ur" ? "زیادہ استعمال کا الرٹ" : "High Usage Alert",
+      message: language === "ur" ? "آج کا استعمال اوسط سے 25% زیادہ ہے" : "Today's usage is 25% above average",
+      icon: AlertTriangle,
+      time: language === "ur" ? "2 گھنٹے پہلے" : "2 hours ago"
+    },
+    { 
+      type: "danger", 
+      title: language === "ur" ? "بل کی ادائیگی قریب" : "Bill Due Soon",
+      message: language === "ur" ? "Rs. 13,000 کی ادائیگی 3 دن میں" : "Rs. 13,000 due in 3 days",
+      icon: Receipt,
+      time: language === "ur" ? "آج" : "Today"
+    },
+    { 
+      type: "info", 
+      title: language === "ur" ? "پیک اوقات فعال" : "Peak Hours Active",
+      message: language === "ur" ? "5 بجے سے 10 بجے تک شرح زیادہ ہے" : "Higher rates from 5 PM - 10 PM",
+      icon: Clock,
+      time: language === "ur" ? "ابھی" : "Now"
+    },
   ];
 
   const chartData = usageData.length > 0 
@@ -135,6 +182,53 @@ const Dashboard = () => {
             <span>{currentDate}</span>
           </div>
         </div>
+
+        {/* Alerts Section */}
+        <Card className="border-warning/30 bg-gradient-to-r from-warning/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <Bell className="w-5 h-5 text-warning" />
+              {t("alerts")}
+              <Badge variant="secondary" className="ml-2">{alerts.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {alerts.map((alert, index) => {
+                const Icon = alert.icon;
+                return (
+                  <div 
+                    key={index}
+                    className={`flex items-start gap-3 p-3 rounded-xl border ${
+                      alert.type === 'danger' ? 'bg-destructive/5 border-destructive/20' :
+                      alert.type === 'warning' ? 'bg-warning/5 border-warning/20' :
+                      'bg-info/5 border-info/20'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      alert.type === 'danger' ? 'bg-destructive/10' :
+                      alert.type === 'warning' ? 'bg-warning/10' :
+                      'bg-info/10'
+                    }`}>
+                      <Icon className={`w-5 h-5 ${
+                        alert.type === 'danger' ? 'text-destructive' :
+                        alert.type === 'warning' ? 'text-warning' :
+                        'text-info'
+                      }`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium text-foreground text-sm">{alert.title}</p>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">{alert.time}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{alert.message}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -205,9 +299,9 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Charts */}
-        <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
-          <Card className="hover:shadow-lg transition-shadow duration-300">
+        {/* Charts and Appliance Usage */}
+        <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
+          <Card className="lg:col-span-2 hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="pb-2">
               <CardTitle className="text-base md:text-lg flex items-center gap-2">
                 <Zap className="w-5 h-5 text-primary" />
@@ -242,35 +336,75 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Appliance Usage */}
           <Card className="hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="pb-2">
               <CardTitle className="text-base md:text-lg flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-primary" />
-                {t("monthlyBills")} (Rs.)
+                <AirVent className="w-5 h-5 text-primary" />
+                {t("applianceUsage")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-56 md:h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--card))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '12px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                      }} 
-                    />
-                    <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+              <div className="space-y-3">
+                {applianceData.map((appliance, index) => {
+                  const Icon = appliance.icon;
+                  return (
+                    <div key={index} className="flex items-center gap-3">
+                      <div 
+                        className="w-9 h-9 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: `${appliance.color}20` }}
+                      >
+                        <Icon className="w-4 h-4" style={{ color: appliance.color }} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-foreground">{appliance.name}</span>
+                          <span className="text-xs text-muted-foreground">{appliance.value}%</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${appliance.value}%`, backgroundColor: appliance.color }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Monthly Bills Chart */}
+        <Card className="hover:shadow-lg transition-shadow duration-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              {t("monthlyBills")} (Rs.)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-56 md:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }} 
+                  />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Quick Tips */}
         <Card className="hover:shadow-lg transition-shadow duration-300 overflow-hidden">

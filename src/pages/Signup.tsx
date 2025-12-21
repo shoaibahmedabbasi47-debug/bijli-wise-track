@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { Zap, ArrowLeft, Globe } from "lucide-react";
+import LanguageToggle from "@/components/LanguageToggle";
+import { Zap, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 
 const signupSchema = z.object({
@@ -26,6 +28,7 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,7 +37,7 @@ const Signup = () => {
     const validation = signupSchema.safeParse({ fullName, email, password, confirmPassword });
     if (!validation.success) {
       toast({
-        title: "Validation Error",
+        title: t("error"),
         description: validation.error.errors[0].message,
         variant: "destructive",
       });
@@ -48,17 +51,21 @@ const Signup = () => {
     if (error) {
       let message = error.message;
       if (message.includes("already registered")) {
-        message = "This email is already registered. Please login instead.";
+        message = language === "ur" 
+          ? "یہ ای میل پہلے سے رجسٹرڈ ہے۔ براہ کرم لاگ ان کریں۔"
+          : "This email is already registered. Please login instead.";
       }
       toast({
-        title: "Sign Up Failed",
+        title: language === "ur" ? "سائن اپ ناکام" : "Sign Up Failed",
         description: message,
         variant: "destructive",
       });
     } else {
       toast({
-        title: "Account Created!",
-        description: "Welcome to BijliTrack. Redirecting to dashboard...",
+        title: language === "ur" ? "اکاؤنٹ بن گیا!" : "Account Created!",
+        description: language === "ur" 
+          ? "BijliTrack میں خوش آمدید۔ ڈیش بورڈ پر جا رہے ہیں..."
+          : "Welcome to BijliTrack. Redirecting to dashboard...",
       });
       navigate("/dashboard");
     }
@@ -71,36 +78,33 @@ const Signup = () => {
         <div className="container mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back</span>
+            <span className="font-medium">{t("back")}</span>
           </Link>
-          <button className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors">
-            <Globe className="w-4 h-4" />
-            <span className="text-sm">اردو</span>
-          </button>
+          <LanguageToggle variant="pill" />
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md">
-          <div className="glass-card rounded-2xl p-8">
+          <div className="glass-card rounded-2xl p-6 md:p-8">
             {/* Logo */}
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
-                <Zap className="w-10 h-10 text-primary-foreground" />
+            <div className="flex flex-col items-center mb-6 md:mb-8">
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
+                <Zap className="w-8 h-8 md:w-10 md:h-10 text-primary-foreground" />
               </div>
-              <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
-              <p className="text-muted-foreground">Start tracking your electricity usage</p>
+              <h1 className="text-xl md:text-2xl font-bold text-foreground">{t("createAccount")}</h1>
+              <p className="text-muted-foreground text-sm md:text-base text-center">{t("startTracking")}</p>
             </div>
 
             {/* Signup Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">{t("fullName")}</Label>
                 <Input
                   id="fullName"
                   type="text"
-                  placeholder="Enter your full name"
+                  placeholder={language === "ur" ? "اپنا پورا نام درج کریں" : "Enter your full name"}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   required
@@ -108,11 +112,11 @@ const Signup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={language === "ur" ? "اپنا ای میل درج کریں" : "Enter your email"}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -120,11 +124,11 @@ const Signup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("password")}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Create a password"
+                  placeholder={language === "ur" ? "پاس ورڈ بنائیں" : "Create a password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -132,11 +136,11 @@ const Signup = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t("confirmPassword")}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="Confirm your password"
+                  placeholder={language === "ur" ? "پاس ورڈ کی تصدیق کریں" : "Confirm your password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -144,15 +148,15 @@ const Signup = () => {
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Creating Account..." : "Sign Up"}
+                {loading ? t("loading") : t("signup")}
               </Button>
             </form>
 
             {/* Login Link */}
             <p className="text-center text-sm text-muted-foreground mt-6">
-              Already have an account?{" "}
+              {t("alreadyHaveAccount")}{" "}
               <Link to="/login" className="text-primary hover:underline font-medium">
-                Login
+                {t("login")}
               </Link>
             </p>
           </div>
