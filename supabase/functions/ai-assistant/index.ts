@@ -12,7 +12,17 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, type, targetLanguage } = await req.json();
+    const body = await req.json();
+    const { type, targetLanguage } = body;
+    
+    // Handle both 'message' (single string) and 'messages' (array) formats
+    let messages: Array<{ role: string; content: string }> = [];
+    if (body.messages && Array.isArray(body.messages)) {
+      messages = body.messages;
+    } else if (body.message) {
+      messages = [{ role: 'user', content: body.message }];
+    }
+    
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
