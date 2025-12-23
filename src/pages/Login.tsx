@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import LanguageToggle from "@/components/LanguageToggle";
 import { Zap, ArrowLeft, User, Shield } from "lucide-react";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -25,6 +26,16 @@ const Login = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
 
+  const checkAdminRole = async (userId: string): Promise<boolean> => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .single();
+    return !!data;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -40,9 +51,9 @@ const Login = () => {
 
     setLoading(true);
     const { error } = await signIn(email, password);
-    setLoading(false);
 
     if (error) {
+      setLoading(false);
       toast({
         title: language === "ur" ? "لاگ ان ناکام" : "Login Failed",
         description: error.message === "Invalid login credentials" 
@@ -50,9 +61,40 @@ const Login = () => {
           : error.message,
         variant: "destructive",
       });
-    } else {
-      navigate("/dashboard");
+      return;
     }
+
+    // Get the logged in user
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      const isAdmin = await checkAdminRole(user.id);
+      
+      if (userType === "admin") {
+        if (isAdmin) {
+          toast({
+            title: language === "ur" ? "خوش آمدید ایڈمن" : "Welcome Admin",
+            description: language === "ur" ? "ایڈمن ڈیش بورڈ میں خوش آمدید" : "Redirecting to admin dashboard...",
+          });
+          navigate("/admin");
+        } else {
+          toast({
+            title: language === "ur" ? "رسائی رد" : "Access Denied",
+            description: language === "ur" ? "آپ کے پاس ایڈمن رسائی نہیں ہے" : "You don't have admin access. Please login as customer.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+        }
+      } else {
+        toast({
+          title: language === "ur" ? "خوش آمدید" : "Welcome Back",
+          description: language === "ur" ? "ڈیش بورڈ پر جا رہے ہیں..." : "Redirecting to dashboard...",
+        });
+        navigate("/dashboard");
+      }
+    }
+    
+    setLoading(false);
   };
 
   const handleDemoLogin = async () => {
@@ -161,24 +203,35 @@ const Login = () => {
                 {loading ? t("loading") : t("login")}
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleDemoLogin}
-                disabled={loading}
-              >
-                {t("useDemoCredentials")}
-              </Button>
+              {userType === "customer" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleDemoLogin}
+                  disabled={loading}
+                >
+                  {t("useDemoCredentials")}
+                </Button>
+              )}
             </form>
 
-            {/* Sign Up Link */}
-            <p className="text-center text-sm text-muted-foreground mt-6">
-              {t("dontHaveAccount")}{" "}
-              <Link to="/signup" className="text-primary hover:underline font-medium">
-                {t("signup")}
-              </Link>
-            </p>
+            {/* Sign Up Link - Only show for customers */}
+            {userType === "customer" && (
+              <p className="text-center text-sm text-muted-foreground mt-6">
+                {t("dontHaveAccount")}{" "}
+                <Link to="/signup" className="text-primary hover:underline font-medium">
+                  {t("signup")}
+                </Link>
+              </p>
+            )}
+            
+            {/* Admin info */}
+            {userType === "admin" && (
+              <p className="text-center text-sm text-muted-foreground mt-6">
+                {language === "ur" ? "صرف منتظمین کے لیے" : "Admin access only"}
+              </p>
+            )}
           </div>
         </div>
       </main>
