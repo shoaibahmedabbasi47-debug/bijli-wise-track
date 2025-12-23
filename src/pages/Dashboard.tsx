@@ -183,53 +183,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Alerts Section */}
-        <Card className="border-warning/30 bg-gradient-to-r from-warning/5 to-transparent">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base md:text-lg flex items-center gap-2">
-              <Bell className="w-5 h-5 text-warning" />
-              {t("alerts")}
-              <Badge variant="secondary" className="ml-2">{alerts.length}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {alerts.map((alert, index) => {
-                const Icon = alert.icon;
-                return (
-                  <div 
-                    key={index}
-                    className={`flex items-start gap-3 p-3 rounded-xl border ${
-                      alert.type === 'danger' ? 'bg-destructive/5 border-destructive/20' :
-                      alert.type === 'warning' ? 'bg-warning/5 border-warning/20' :
-                      'bg-info/5 border-info/20'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      alert.type === 'danger' ? 'bg-destructive/10' :
-                      alert.type === 'warning' ? 'bg-warning/10' :
-                      'bg-info/10'
-                    }`}>
-                      <Icon className={`w-5 h-5 ${
-                        alert.type === 'danger' ? 'text-destructive' :
-                        alert.type === 'warning' ? 'text-warning' :
-                        'text-info'
-                      }`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium text-foreground text-sm">{alert.title}</p>
-                        <span className="text-xs text-muted-foreground flex-shrink-0">{alert.time}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{alert.message}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <Card className="hover:shadow-lg transition-shadow duration-300 border-primary/20 hover:border-primary/40">
@@ -298,6 +251,53 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Alerts Section */}
+        <Card className="border-warning/30 bg-gradient-to-r from-warning/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <Bell className="w-5 h-5 text-warning" />
+              {t("alerts")}
+              <Badge variant="secondary" className="ml-2">{alerts.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {alerts.map((alert, index) => {
+                const Icon = alert.icon;
+                return (
+                  <div 
+                    key={index}
+                    className={`flex items-start gap-3 p-3 rounded-xl border ${
+                      alert.type === 'danger' ? 'bg-destructive/5 border-destructive/20' :
+                      alert.type === 'warning' ? 'bg-warning/5 border-warning/20' :
+                      'bg-info/5 border-info/20'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      alert.type === 'danger' ? 'bg-destructive/10' :
+                      alert.type === 'warning' ? 'bg-warning/10' :
+                      'bg-info/10'
+                    }`}>
+                      <Icon className={`w-5 h-5 ${
+                        alert.type === 'danger' ? 'text-destructive' :
+                        alert.type === 'warning' ? 'text-warning' :
+                        'text-info'
+                      }`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium text-foreground text-sm">{alert.title}</p>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">{alert.time}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{alert.message}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Charts and Appliance Usage */}
         <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
