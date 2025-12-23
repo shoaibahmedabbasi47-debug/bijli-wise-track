@@ -64,10 +64,10 @@ const Signup = () => {
       toast({
         title: language === "ur" ? "اکاؤنٹ بن گیا!" : "Account Created!",
         description: language === "ur" 
-          ? "BijliTrack میں خوش آمدید۔ ڈیش بورڈ پر جا رہے ہیں..."
-          : "Welcome to BijliTrack. Redirecting to dashboard...",
+          ? "براہ کرم لاگ ان کریں۔"
+          : "Please login to continue.",
       });
-      navigate("/dashboard");
+      navigate("/login");
     }
   };
 

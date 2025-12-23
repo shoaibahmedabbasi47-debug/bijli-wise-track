@@ -6,17 +6,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, MapPin, Zap, Bell, Shield, Settings } from "lucide-react";
+import { User, Mail, Phone, MapPin, Zap, Bell, Shield, Eye, EyeOff } from "lucide-react";
 
 const Profile = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [profile, setProfile] = useState({ full_name: "", phone: "", address: "", meter_number: "" });
   const [notifications, setNotifications] = useState({
     email: true,
@@ -41,6 +59,56 @@ const Profile = () => {
     setLoading(false);
     if (error) toast({ title: t("error"), description: error.message, variant: "destructive" });
     else toast({ title: t("success"), description: language === "ur" ? "پروفائل کامیابی سے اپ ڈیٹ ہو گیا" : "Profile updated successfully" });
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      toast({
+        title: t("error"),
+        description: language === "ur" ? "براہ کرم تمام فیلڈز بھریں" : "Please fill all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: t("error"),
+        description: language === "ur" ? "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے" : "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: t("error"),
+        description: language === "ur" ? "پاس ورڈ مماثل نہیں ہیں" : "Passwords don't match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPasswordLoading(true);
+    const { error } = await supabase.auth.updateUser({
+      password: passwordData.newPassword,
+    });
+    setPasswordLoading(false);
+
+    if (error) {
+      toast({
+        title: t("error"),
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: t("success"),
+        description: language === "ur" ? "پاس ورڈ کامیابی سے تبدیل ہو گیا" : "Password changed successfully",
+      });
+      setPasswordDialogOpen(false);
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    }
   };
 
   return (
@@ -208,10 +276,73 @@ const Profile = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full justify-start">
-                  <Shield className="w-4 h-4 mr-2" />
-                  {t("changePassword")}
-                </Button>
+                <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Shield className="w-4 h-4 mr-2" />
+                      {t("changePassword")}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {language === "ur" ? "پاس ورڈ تبدیل کریں" : "Change Password"}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {language === "ur" 
+                          ? "اپنا نیا پاس ورڈ درج کریں" 
+                          : "Enter your new password below"}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label>{language === "ur" ? "نیا پاس ورڈ" : "New Password"}</Label>
+                        <div className="relative">
+                          <Input
+                            type={showNewPassword ? "text" : "password"}
+                            value={passwordData.newPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                            placeholder={language === "ur" ? "نیا پاس ورڈ" : "New password"}
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                          >
+                            {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{language === "ur" ? "پاس ورڈ کی تصدیق" : "Confirm Password"}</Label>
+                        <div className="relative">
+                          <Input
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={passwordData.confirmPassword}
+                            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                            placeholder={language === "ur" ? "پاس ورڈ کی تصدیق کریں" : "Confirm password"}
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={handleChangePassword} 
+                        disabled={passwordLoading} 
+                        className="w-full"
+                      >
+                        {passwordLoading 
+                          ? t("loading") 
+                          : (language === "ur" ? "پاس ورڈ تبدیل کریں" : "Change Password")}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 <div className="p-4 bg-success/5 border border-success/20 rounded-xl">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-success/10 rounded-lg flex items-center justify-center">
