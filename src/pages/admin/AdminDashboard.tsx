@@ -1,28 +1,17 @@
 import { useState, useEffect } from "react";
 import { 
   Users, 
-  FileText, 
-  DollarSign, 
-  TrendingUp, 
-  Activity, 
+  Zap, 
+  Activity,
   AlertTriangle,
-  CheckCircle2,
-  Clock,
-  ArrowUpRight,
-  ArrowDownRight,
-  Zap,
-  UserPlus,
-  Receipt,
-  Settings,
-  RefreshCw
+  Building2,
+  Home,
+  Factory,
+  User
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -34,33 +23,37 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
+  Legend,
 } from "recharts";
 
-interface RecentActivity {
+interface TopConsumer {
   id: string;
-  type: "bill_paid" | "new_user" | "ticket" | "bill_created";
-  description: string;
+  name: string;
+  location: string;
+  type: "Residential" | "Commercial" | "Industrial";
+  usage: number;
+}
+
+interface Alert {
+  id: string;
+  message: string;
   time: string;
+  type: "warning" | "info" | "success";
 }
 
 const AdminDashboard = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const [stats, setStats] = useState({
     totalUsers: 0,
-    totalRevenue: 0,
-    totalUnits: 0,
-    pendingBills: 0,
-    paidBills: 0,
-    openTickets: 0,
+    totalUsage: 0,
+    activeConnections: 0,
+    systemAlerts: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [monthlyData, setMonthlyData] = useState<{ month: string; amount: number; units: number }[]>([]);
-  const [billStatusData, setBillStatusData] = useState<{ name: string; value: number }[]>([]);
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [monthlyData, setMonthlyData] = useState<{ month: string; units: number }[]>([]);
+  const [userDistribution, setUserDistribution] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [topConsumers, setTopConsumers] = useState<TopConsumer[]>([]);
+  const [recentAlerts, setRecentAlerts] = useState<Alert[]>([]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -70,68 +63,65 @@ const AdminDashboard = () => {
         .from("profiles")
         .select("*", { count: "exact", head: true });
 
-      // Fetch bills data
+      // Fetch bills data for usage
       const { data: bills } = await supabase.from("bills").select("*");
 
-      // Fetch open tickets
+      // Fetch open tickets for alerts
       const { count: openTickets } = await supabase
         .from("support_tickets")
         .select("*", { count: "exact", head: true })
         .eq("status", "open");
 
       if (bills) {
-        const totalRevenue = bills
-          .filter((b) => b.paid)
-          .reduce((sum, b) => sum + Number(b.total_amount), 0);
         const totalUnits = bills.reduce((sum, b) => sum + Number(b.total_units), 0);
-        const pendingBills = bills.filter((b) => !b.paid).length;
-        const paidBills = bills.filter((b) => b.paid).length;
 
         setStats({
           totalUsers: usersCount || 0,
-          totalRevenue,
-          totalUnits,
-          pendingBills,
-          paidBills,
-          openTickets: openTickets || 0,
+          totalUsage: totalUnits,
+          activeConnections: usersCount || 0,
+          systemAlerts: openTickets || 0,
         });
 
-        setBillStatusData([
-          { name: language === "ur" ? "ادا شدہ" : "Paid", value: paidBills },
-          { name: language === "ur" ? "زیر التوا" : "Pending", value: pendingBills },
-        ]);
-
-        // Group by month with units
-        const monthlyMap: { [key: string]: { amount: number; units: number } } = {};
+        // Group by month for chart
+        const monthlyMap: { [key: string]: number } = {};
         bills.forEach((bill) => {
           const month = bill.bill_month;
           if (!monthlyMap[month]) {
-            monthlyMap[month] = { amount: 0, units: 0 };
+            monthlyMap[month] = 0;
           }
-          monthlyMap[month].amount += Number(bill.total_amount);
-          monthlyMap[month].units += Number(bill.total_units);
+          monthlyMap[month] += Number(bill.total_units);
         });
 
         const sortedMonths = Object.entries(monthlyMap)
           .sort((a, b) => a[0].localeCompare(b[0]))
           .slice(-6)
-          .map(([month, data]) => ({ month, ...data }));
+          .map(([month, units]) => ({ month, units }));
 
         setMonthlyData(sortedMonths);
-
-        // Create recent activities from bills
-        const activities: RecentActivity[] = bills
-          .slice(0, 5)
-          .map((bill) => ({
-            id: bill.id,
-            type: bill.paid ? "bill_paid" as const : "bill_created" as const,
-            description: bill.paid 
-              ? `Bill for ${bill.bill_month} paid - Rs. ${Number(bill.total_amount).toLocaleString()}`
-              : `Bill for ${bill.bill_month} created - Rs. ${Number(bill.total_amount).toLocaleString()}`,
-            time: new Date(bill.created_at).toLocaleDateString(),
-          }));
-        setRecentActivities(activities);
       }
+
+      // Set user distribution (demo data for now)
+      setUserDistribution([
+        { name: language === "ur" ? "رہائشی" : "Residential", value: 65, color: "#22c55e" },
+        { name: language === "ur" ? "تجارتی" : "Commercial", value: 25, color: "#3b82f6" },
+        { name: language === "ur" ? "صنعتی" : "Industrial", value: 10, color: "#f59e0b" },
+      ]);
+
+      // Set top consumers (demo data)
+      setTopConsumers([
+        { id: "1", name: "Ahmed Khan", location: "Lahore", type: "Residential", usage: 450 },
+        { id: "2", name: "XYZ Industries", location: "Karachi", type: "Industrial", usage: 1250 },
+        { id: "3", name: "ABC Mall", location: "Islamabad", type: "Commercial", usage: 890 },
+        { id: "4", name: "Sara Ahmed", location: "Faisalabad", type: "Residential", usage: 380 },
+      ]);
+
+      // Set recent alerts (demo data)
+      setRecentAlerts([
+        { id: "1", message: language === "ur" ? "سیکٹر 5 میں غیر معمولی اضافہ" : "Unusual spike in Sector 5", time: language === "ur" ? "10 منٹ پہلے" : "10 min ago", type: "warning" },
+        { id: "2", message: language === "ur" ? "نیا صارف رجسٹریشن" : "New user registration spike", time: language === "ur" ? "1 گھنٹے پہلے" : "1 hour ago", type: "info" },
+        { id: "3", message: language === "ur" ? "سسٹم مینٹیننس شیڈول" : "System maintenance scheduled", time: language === "ur" ? "2 گھنٹے پہلے" : "2 hours ago", type: "success" },
+      ]);
+
     } catch (error) {
       console.error("Error fetching admin stats:", error);
     } finally {
@@ -143,69 +133,27 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  const COLORS = ["hsl(142, 71%, 45%)", "hsl(0, 84%, 60%)"];
-
-  const statCards = [
-    {
-      title: t("totalUsers"),
-      value: stats.totalUsers,
-      icon: Users,
-      color: "from-blue-500 to-blue-600",
-      iconBg: "bg-blue-500/10",
-      iconColor: "text-blue-500",
-      change: "+12%",
-      changeUp: true,
-    },
-    {
-      title: t("totalRevenue"),
-      value: `Rs. ${stats.totalRevenue.toLocaleString()}`,
-      icon: DollarSign,
-      color: "from-green-500 to-green-600",
-      iconBg: "bg-green-500/10",
-      iconColor: "text-green-500",
-      change: "+8%",
-      changeUp: true,
-    },
-    {
-      title: t("units"),
-      value: `${stats.totalUnits.toLocaleString()} kWh`,
-      icon: Zap,
-      color: "from-yellow-500 to-yellow-600",
-      iconBg: "bg-yellow-500/10",
-      iconColor: "text-yellow-500",
-      change: "-3%",
-      changeUp: false,
-    },
-    {
-      title: t("pendingBills"),
-      value: stats.pendingBills,
-      icon: FileText,
-      color: "from-red-500 to-red-600",
-      iconBg: "bg-red-500/10",
-      iconColor: "text-red-500",
-      change: stats.pendingBills > 5 ? "High" : "Normal",
-      changeUp: false,
-    },
-  ];
-
-  const quickActions = [
-    { icon: UserPlus, label: language === "ur" ? "صارف شامل کریں" : "Add User", path: "/admin/users" },
-    { icon: Receipt, label: language === "ur" ? "بل دیکھیں" : "View Bills", path: "/admin/bills" },
-    { icon: FileText, label: language === "ur" ? "رپورٹس" : "Reports", path: "/admin/reports" },
-    { icon: Settings, label: language === "ur" ? "ترتیبات" : "Settings", path: "/admin" },
-  ];
-
-  const getActivityIcon = (type: string) => {
+  const getTypeIcon = (type: string) => {
     switch (type) {
-      case "bill_paid":
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-      case "new_user":
-        return <UserPlus className="w-4 h-4 text-blue-500" />;
-      case "ticket":
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
+      case "Residential":
+        return <Home className="w-4 h-4 text-success" />;
+      case "Commercial":
+        return <Building2 className="w-4 h-4 text-info" />;
+      case "Industrial":
+        return <Factory className="w-4 h-4 text-warning" />;
       default:
-        return <Receipt className="w-4 h-4 text-primary" />;
+        return <User className="w-4 h-4" />;
     }
+  };
+
+  const formatUsage = (value: number) => {
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`;
+    }
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}K`;
+    }
+    return value.toString();
   };
 
   if (loading) {
@@ -219,50 +167,70 @@ const AdminDashboard = () => {
     );
   }
 
-  const collectionRate = stats.paidBills + stats.pendingBills > 0 
-    ? Math.round((stats.paidBills / (stats.paidBills + stats.pendingBills)) * 100)
-    : 0;
+  const statCards = [
+    {
+      title: language === "ur" ? "کل صارفین" : "Total Users",
+      value: stats.totalUsers.toLocaleString(),
+      change: "+15%",
+      changeText: language === "ur" ? "گزشتہ ہفتے سے" : "vs last week",
+      icon: Users,
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+    },
+    {
+      title: language === "ur" ? "کل استعمال" : "Total Usage",
+      value: formatUsage(stats.totalUsage),
+      subText: language === "ur" ? "یونٹس" : "Units",
+      change: "-8%",
+      changeText: language === "ur" ? "گزشتہ ہفتے سے" : "vs last week",
+      icon: Zap,
+      iconBg: "bg-success/10",
+      iconColor: "text-success",
+    },
+    {
+      title: language === "ur" ? "فعال کنکشن" : "Active Connections",
+      value: stats.activeConnections.toLocaleString(),
+      icon: Activity,
+      iconBg: "bg-info/10",
+      iconColor: "text-info",
+    },
+    {
+      title: language === "ur" ? "سسٹم الرٹس" : "System Alerts",
+      value: stats.systemAlerts.toString(),
+      icon: AlertTriangle,
+      iconBg: "bg-warning/10",
+      iconColor: "text-warning",
+    },
+  ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/20">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("admin")} {t("dashboard")}</h1>
-          <p className="text-muted-foreground mt-1">{language === "ur" ? "سسٹم کا جائزہ اور تجزیات" : "System overview and analytics"}</p>
-        </div>
-        <Button onClick={fetchStats} variant="outline" size="sm" className="w-fit gap-2 rounded-xl">
-          <RefreshCw className="w-4 h-4" />
-          {language === "ur" ? "تازہ کریں" : "Refresh"}
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">{language === "ur" ? "ایڈمن ڈیش بورڈ" : "Admin Dashboard"}</h1>
+        <p className="text-sm text-primary mt-1">{language === "ur" ? "سسٹم کا جائزہ اور تجزیات" : "System overview and analytics"}</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, index) => (
-          <Card key={index} className="admin-stat-card group">
-            <CardContent className="p-6">
+          <Card key={index} className="bg-card border-border/50">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-2 font-medium">{stat.title}</p>
-                  <p className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</p>
-                  <div className="flex items-center gap-1.5 mt-3">
-                    {stat.changeUp ? (
-                      <div className="flex items-center gap-1 text-success bg-success/10 px-2 py-0.5 rounded-full">
-                        <ArrowUpRight className="w-3 h-3" />
-                        <span className="text-xs font-semibold">{stat.change}</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
-                        <ArrowDownRight className="w-3 h-3" />
-                        <span className="text-xs font-semibold">{stat.change}</span>
-                      </div>
-                    )}
-                    <span className="text-xs text-muted-foreground">{language === "ur" ? "اس ماہ" : "this month"}</span>
+                <div>
+                  <p className="text-sm text-muted-foreground">{stat.title}</p>
+                  <div className="flex items-baseline gap-1 mt-1">
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                    {stat.subText && <span className="text-sm text-muted-foreground">{stat.subText}</span>}
                   </div>
+                  {stat.change && (
+                    <p className={`text-xs mt-1 ${stat.change.startsWith('+') ? 'text-success' : 'text-destructive'}`}>
+                      {stat.change} <span className="text-muted-foreground">{stat.changeText}</span>
+                    </p>
+                  )}
                 </div>
-                <div className={`w-14 h-14 rounded-2xl ${stat.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
-                  <stat.icon className={`w-7 h-7 ${stat.iconColor}`} />
+                <div className={`w-10 h-10 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
+                  <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
                 </div>
               </div>
             </CardContent>
@@ -270,247 +238,174 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Quick Actions & System Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Actions */}
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary" />
-              </div>
-              {language === "ur" ? "فوری کاروائیاں" : "Quick Actions"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              {quickActions.map((action, index) => (
-                <Link key={index} to={action.path}>
-                  <Button variant="outline" className="w-full h-auto py-5 flex flex-col items-center gap-3 hover:bg-primary/5 hover:border-primary/40 rounded-xl transition-all duration-300 group">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <action.icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <span className="text-xs font-semibold">{action.label}</span>
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* System Health */}
-        <Card className="lg:col-span-2 border-border/50 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Activity className="w-4 h-4 text-primary" />
-              </div>
-              {language === "ur" ? "سسٹم کی صحت" : "System Health"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-3 gap-6">
-              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">{language === "ur" ? "وصولی کی شرح" : "Collection Rate"}</span>
-                  <span className="font-bold text-primary">{collectionRate}%</span>
-                </div>
-                <Progress value={collectionRate} className="h-2.5" />
-                <p className="text-xs text-muted-foreground">
-                  {stats.paidBills} {language === "ur" ? "میں سے" : "of"} {stats.paidBills + stats.pendingBills} {language === "ur" ? "بل ادا شدہ" : "bills paid"}
-                </p>
-              </div>
-              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">{language === "ur" ? "کھلے ٹکٹ" : "Open Tickets"}</span>
-                  <span className="font-bold text-warning">{stats.openTickets}</span>
-                </div>
-                <Progress value={stats.openTickets > 10 ? 100 : stats.openTickets * 10} className="h-2.5" />
-                <p className="text-xs text-muted-foreground">
-                  {stats.openTickets > 5 
-                    ? (language === "ur" ? "توجہ درکار" : "Needs attention")
-                    : (language === "ur" ? "نارمل" : "Normal")}
-                </p>
-              </div>
-              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">{language === "ur" ? "فعال صارفین" : "Active Users"}</span>
-                  <span className="font-bold text-info">{stats.totalUsers}</span>
-                </div>
-                <Progress value={Math.min(stats.totalUsers * 10, 100)} className="h-2.5" />
-                <p className="text-xs text-muted-foreground">
-                  {language === "ur" ? "کل رجسٹرڈ صارفین" : "Total registered users"}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-primary" />
-              </div>
-              {language === "ur" ? "ماہانہ آمدنی" : "Monthly Revenue"}
+        {/* Monthly Usage Trend */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">
+              {language === "ur" ? "ماہانہ استعمال کا رجحان" : "Monthly Usage Trend"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData}>
-                  <defs>
-                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    formatter={(value: number) => [`Rs. ${value.toLocaleString()}`, language === "ur" ? "آمدنی" : "Revenue"]}
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
+                <BarChart data={monthlyData.length > 0 ? monthlyData : [
+                  { month: "Jan", units: 42000 },
+                  { month: "Feb", units: 48000 },
+                  { month: "Mar", units: 52000 },
+                  { month: "Apr", units: 58000 },
+                  { month: "May", units: 55000 },
+                  { month: "Jun", units: 68000 },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={12} 
+                    tickLine={false}
+                    axisLine={false}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="amount"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={3}
-                    fill="url(#colorAmount)"
+                  <YAxis 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false}
+                    tickFormatter={(value) => formatUsage(value)}
                   />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
-                <FileText className="w-4 h-4 text-primary" />
-              </div>
-              {language === "ur" ? "بل کی صورتحال" : "Bill Status Distribution"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72 flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={billStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={70}
-                    outerRadius={95}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {billStatusData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex justify-center gap-8 mt-4">
-              {billStatusData.map((item, index) => (
-                <div key={index} className="flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-full">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index] }}></div>
-                  <span className="text-sm font-medium text-foreground">{item.name}: {item.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity & Units Trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Clock className="w-4 h-4 text-primary" />
-              </div>
-              {language === "ur" ? "حالیہ سرگرمی" : "Recent Activity"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentActivities.length > 0 ? (
-                recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-4 rounded-xl hover:bg-muted/50 transition-all duration-300 border border-transparent hover:border-border/50">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                      {getActivityIcon(activity.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground font-medium truncate">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  {language === "ur" ? "کوئی حالیہ سرگرمی نہیں" : "No recent activity"}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Units Trend */}
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Zap className="w-4 h-4 text-primary" />
-              </div>
-              {language === "ur" ? "یونٹس کا رجحان" : "Units Trend"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip
                     formatter={(value: number) => [`${value.toLocaleString()} kWh`, language === "ur" ? "یونٹس" : "Units"]}
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "12px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                      borderRadius: "8px",
                     }}
                   />
                   <Bar
                     dataKey="units"
                     fill="hsl(var(--primary))"
-                    radius={[8, 8, 0, 0]}
+                    radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* User Distribution */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">
+              {language === "ur" ? "صارف کی تقسیم" : "User Distribution"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={userDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {userDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    formatter={(value, entry: any) => (
+                      <span className="text-sm text-muted-foreground">
+                        {value} ({entry.payload.value}%)
+                      </span>
+                    )}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value: number) => [`${value}%`, ""]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Consumers */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold">
+              {language === "ur" ? "سب سے زیادہ صارفین" : "Top Consumers"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {topConsumers.map((consumer) => (
+                <div key={consumer.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      {getTypeIcon(consumer.type)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{consumer.name}</p>
+                      <p className="text-xs text-muted-foreground">{consumer.location} • {consumer.type}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-primary">{consumer.usage} kWh</p>
+                    <p className="text-xs text-muted-foreground">{language === "ur" ? "ماہانہ" : "Monthly"}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Alerts */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold">
+              {language === "ur" ? "حالیہ الرٹس" : "Recent Alerts"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {recentAlerts.map((alert) => (
+              <div 
+                key={alert.id} 
+                className={`flex items-start gap-3 p-4 rounded-xl ${
+                  alert.type === 'warning' ? 'bg-warning/10 border border-warning/20' :
+                  alert.type === 'info' ? 'bg-info/10 border border-info/20' :
+                  'bg-success/10 border border-success/20'
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  alert.type === 'warning' ? 'bg-warning/20' :
+                  alert.type === 'info' ? 'bg-info/20' :
+                  'bg-success/20'
+                }`}>
+                  <AlertTriangle className={`w-3.5 h-3.5 ${
+                    alert.type === 'warning' ? 'text-warning' :
+                    alert.type === 'info' ? 'text-info' :
+                    'text-success'
+                  }`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground">{alert.message}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{alert.time}</p>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>

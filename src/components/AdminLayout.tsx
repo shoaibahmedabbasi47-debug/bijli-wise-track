@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   Users, 
   FileText, 
@@ -7,18 +7,21 @@ import {
   LayoutDashboard,
   Menu,
   X,
-  ArrowLeft
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import LanguageToggle from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const { t, language } = useLanguage();
+  const { signOut } = useAuth();
 
   const navItems = [
     { path: "/admin", icon: LayoutDashboard, label: t("dashboard"), exact: true },
@@ -30,6 +33,11 @@ const AdminLayout = () => {
   const isActive = (path: string, exact?: boolean) => {
     if (exact) return location.pathname === path;
     return location.pathname.startsWith(path);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login");
   };
 
   useEffect(() => {
@@ -70,9 +78,9 @@ const AdminLayout = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
+                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all",
                 isActive(item.path, item.exact)
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground shadow-md"
                   : "hover:bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
@@ -82,16 +90,18 @@ const AdminLayout = () => {
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-          <Link to="/dashboard">
-            <Button variant="outline" className="w-full flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to User Dashboard
-            </Button>
-          </Link>
-          <div className="mt-4 hidden lg:block">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border space-y-3">
+          <div className="hidden lg:block">
             <LanguageToggle />
           </div>
+          <Button 
+            variant="destructive" 
+            className="w-full flex items-center gap-2 rounded-xl"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" />
+            {language === "ur" ? "لاگ آؤٹ" : "Logout"}
+          </Button>
         </div>
       </aside>
 
