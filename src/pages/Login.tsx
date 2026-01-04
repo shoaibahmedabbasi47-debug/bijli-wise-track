@@ -118,9 +118,9 @@ const Login = () => {
   return (
     <div className="min-h-screen gradient-bg-radial flex flex-col">
       {/* Header */}
-      <header className="p-4">
+      <header className="p-4 relative z-10">
         <div className="container mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity">
+          <Link to="/" className="flex items-center gap-2 text-foreground/90 hover:text-foreground transition-all duration-300 bg-card/20 backdrop-blur-sm px-4 py-2 rounded-xl border border-card/30">
             <ArrowLeft className="w-5 h-5" />
             <span className="font-medium">{t("back")}</span>
           </Link>
@@ -130,25 +130,25 @@ const Login = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="glass-card rounded-2xl p-6 md:p-8">
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="glass-card rounded-3xl p-8 md:p-10 shadow-2xl border border-border/30">
             {/* Logo */}
-            <div className="flex flex-col items-center mb-6 md:mb-8">
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
-                <Zap className="w-8 h-8 md:w-10 md:h-10 text-primary-foreground" />
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center mb-4 shadow-xl">
+                <Zap className="w-9 h-9 md:w-11 md:h-11 text-primary-foreground" />
               </div>
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">BijliTrack</h1>
-              <p className="text-muted-foreground text-sm md:text-base">{t("accessAccount")}</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">BijliTrack</h1>
+              <p className="text-muted-foreground text-sm md:text-base mt-1">{t("accessAccount")}</p>
             </div>
 
             {/* User Type Toggle */}
-            <div className="flex bg-muted rounded-lg p-1 mb-6">
+            <div className="flex bg-muted/80 backdrop-blur-sm rounded-xl p-1.5 mb-6 border border-border/50 shadow-inner">
               <button
                 onClick={() => setUserType("customer")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${
                   userType === "customer"
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 }`}
               >
                 <User className="w-4 h-4" />
@@ -156,10 +156,10 @@ const Login = () => {
               </button>
               <button
                 onClick={() => setUserType("admin")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${
                   userType === "admin"
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-lg"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 }`}
               >
                 <Shield className="w-4 h-4" />
@@ -168,9 +168,9 @@ const Login = () => {
             </div>
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">{t("email")}</Label>
+                <Label htmlFor="email" className="text-sm font-semibold">{t("email")}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -178,11 +178,12 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="h-12 rounded-xl border-border/50 focus:border-primary/50 transition-all duration-300"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">{t("password")}</Label>
+                <Label htmlFor="password" className="text-sm font-semibold">{t("password")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -190,16 +191,17 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="h-12 rounded-xl border-border/50 focus:border-primary/50 transition-all duration-300"
                 />
               </div>
 
               <div className="text-right">
-                <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline font-medium">
                   {t("forgotPassword")}
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full h-12 rounded-xl text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300" disabled={loading}>
                 {loading ? t("loading") : t("login")}
               </Button>
 
@@ -207,7 +209,7 @@ const Login = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-12 rounded-xl text-base font-medium"
                   onClick={handleDemoLogin}
                   disabled={loading}
                 >
@@ -218,9 +220,9 @@ const Login = () => {
 
             {/* Sign Up Link - Only show for customers */}
             {userType === "customer" && (
-              <p className="text-center text-sm text-muted-foreground mt-6">
+              <p className="text-center text-sm text-muted-foreground mt-8">
                 {t("dontHaveAccount")}{" "}
-                <Link to="/signup" className="text-primary hover:underline font-medium">
+                <Link to="/signup" className="text-primary hover:underline font-semibold">
                   {t("signup")}
                 </Link>
               </p>
@@ -228,7 +230,7 @@ const Login = () => {
             
             {/* Admin info */}
             {userType === "admin" && (
-              <p className="text-center text-sm text-muted-foreground mt-6">
+              <p className="text-center text-sm text-muted-foreground mt-8">
                 {language === "ur" ? "صرف منتظمین کے لیے" : "Admin access only"}
               </p>
             )}
