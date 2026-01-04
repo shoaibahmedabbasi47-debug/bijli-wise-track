@@ -224,41 +224,45 @@ const AdminDashboard = () => {
     : 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 rounded-2xl border border-primary/20">
         <div>
-          <h1 className="text-2xl font-bold">{t("admin")} {t("dashboard")}</h1>
-          <p className="text-muted-foreground">{language === "ur" ? "سسٹم کا جائزہ اور تجزیات" : "System overview and analytics"}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("admin")} {t("dashboard")}</h1>
+          <p className="text-muted-foreground mt-1">{language === "ur" ? "سسٹم کا جائزہ اور تجزیات" : "System overview and analytics"}</p>
         </div>
-        <Button onClick={fetchStats} variant="outline" size="sm" className="w-fit">
-          <RefreshCw className="w-4 h-4 mr-2" />
+        <Button onClick={fetchStats} variant="outline" size="sm" className="w-fit gap-2 rounded-xl">
+          <RefreshCw className="w-4 h-4" />
           {language === "ur" ? "تازہ کریں" : "Refresh"}
         </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {statCards.map((stat, index) => (
-          <Card key={index} className="hover:shadow-lg transition-all hover:-translate-y-1 overflow-hidden">
+          <Card key={index} className="admin-stat-card group">
             <CardContent className="p-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <div className="flex items-center gap-1 mt-2">
+                  <p className="text-sm text-muted-foreground mb-2 font-medium">{stat.title}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-foreground">{stat.value}</p>
+                  <div className="flex items-center gap-1.5 mt-3">
                     {stat.changeUp ? (
-                      <ArrowUpRight className="w-3 h-3 text-green-500" />
+                      <div className="flex items-center gap-1 text-success bg-success/10 px-2 py-0.5 rounded-full">
+                        <ArrowUpRight className="w-3 h-3" />
+                        <span className="text-xs font-semibold">{stat.change}</span>
+                      </div>
                     ) : (
-                      <ArrowDownRight className="w-3 h-3 text-red-500" />
+                      <div className="flex items-center gap-1 text-destructive bg-destructive/10 px-2 py-0.5 rounded-full">
+                        <ArrowDownRight className="w-3 h-3" />
+                        <span className="text-xs font-semibold">{stat.change}</span>
+                      </div>
                     )}
-                    <span className={`text-xs font-medium ${stat.changeUp ? "text-green-500" : "text-red-500"}`}>
-                      {stat.change}
-                    </span>
                     <span className="text-xs text-muted-foreground">{language === "ur" ? "اس ماہ" : "this month"}</span>
                   </div>
                 </div>
-                <div className={`w-12 h-12 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
-                  <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
+                <div className={`w-14 h-14 rounded-2xl ${stat.iconBg} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+                  <stat.icon className={`w-7 h-7 ${stat.iconColor}`} />
                 </div>
               </div>
             </CardContent>
@@ -269,10 +273,12 @@ const AdminDashboard = () => {
       {/* Quick Actions & System Health */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-5 h-5 text-primary" />
+        <Card className="border-border/50 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Zap className="w-4 h-4 text-primary" />
+              </div>
               {language === "ur" ? "فوری کاروائیاں" : "Quick Actions"}
             </CardTitle>
           </CardHeader>
@@ -280,9 +286,11 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-2 gap-3">
               {quickActions.map((action, index) => (
                 <Link key={index} to={action.path}>
-                  <Button variant="outline" className="w-full h-auto py-4 flex flex-col items-center gap-2 hover:bg-primary/5 hover:border-primary/30">
-                    <action.icon className="w-5 h-5 text-primary" />
-                    <span className="text-xs font-medium">{action.label}</span>
+                  <Button variant="outline" className="w-full h-auto py-5 flex flex-col items-center gap-3 hover:bg-primary/5 hover:border-primary/40 rounded-xl transition-all duration-300 group">
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <action.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-xs font-semibold">{action.label}</span>
                   </Button>
                 </Link>
               ))}
@@ -291,43 +299,45 @@ const AdminDashboard = () => {
         </Card>
 
         {/* System Health */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
+        <Card className="lg:col-span-2 border-border/50 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Activity className="w-4 h-4 text-primary" />
+              </div>
               {language === "ur" ? "سسٹم کی صحت" : "System Health"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid sm:grid-cols-3 gap-4">
-              <div className="space-y-2">
+            <div className="grid sm:grid-cols-3 gap-6">
+              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{language === "ur" ? "وصولی کی شرح" : "Collection Rate"}</span>
-                  <span className="font-medium">{collectionRate}%</span>
+                  <span className="text-muted-foreground font-medium">{language === "ur" ? "وصولی کی شرح" : "Collection Rate"}</span>
+                  <span className="font-bold text-primary">{collectionRate}%</span>
                 </div>
-                <Progress value={collectionRate} className="h-2" />
+                <Progress value={collectionRate} className="h-2.5" />
                 <p className="text-xs text-muted-foreground">
                   {stats.paidBills} {language === "ur" ? "میں سے" : "of"} {stats.paidBills + stats.pendingBills} {language === "ur" ? "بل ادا شدہ" : "bills paid"}
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{language === "ur" ? "کھلے ٹکٹ" : "Open Tickets"}</span>
-                  <span className="font-medium">{stats.openTickets}</span>
+                  <span className="text-muted-foreground font-medium">{language === "ur" ? "کھلے ٹکٹ" : "Open Tickets"}</span>
+                  <span className="font-bold text-warning">{stats.openTickets}</span>
                 </div>
-                <Progress value={stats.openTickets > 10 ? 100 : stats.openTickets * 10} className="h-2" />
+                <Progress value={stats.openTickets > 10 ? 100 : stats.openTickets * 10} className="h-2.5" />
                 <p className="text-xs text-muted-foreground">
                   {stats.openTickets > 5 
                     ? (language === "ur" ? "توجہ درکار" : "Needs attention")
                     : (language === "ur" ? "نارمل" : "Normal")}
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3 p-4 bg-muted/50 rounded-xl">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{language === "ur" ? "فعال صارفین" : "Active Users"}</span>
-                  <span className="font-medium">{stats.totalUsers}</span>
+                  <span className="text-muted-foreground font-medium">{language === "ur" ? "فعال صارفین" : "Active Users"}</span>
+                  <span className="font-bold text-info">{stats.totalUsers}</span>
                 </div>
-                <Progress value={Math.min(stats.totalUsers * 10, 100)} className="h-2" />
+                <Progress value={Math.min(stats.totalUsers * 10, 100)} className="h-2.5" />
                 <p className="text-xs text-muted-foreground">
                   {language === "ur" ? "کل رجسٹرڈ صارفین" : "Total registered users"}
                 </p>
@@ -339,39 +349,42 @@ const AdminDashboard = () => {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
+        <Card className="border-border/50 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-primary" />
+              </div>
               {language === "ur" ? "ماہانہ آمدنی" : "Monthly Revenue"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyData}>
                   <defs>
                     <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
                       <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip
                     formatter={(value: number) => [`Rs. ${value.toLocaleString()}`, language === "ur" ? "آمدنی" : "Revenue"]}
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="amount"
                     stroke="hsl(var(--primary))"
-                    strokeWidth={2}
+                    strokeWidth={3}
                     fill="url(#colorAmount)"
                   />
                 </AreaChart>
@@ -380,23 +393,25 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
+        <Card className="border-border/50 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
+                <FileText className="w-4 h-4 text-primary" />
+              </div>
               {language === "ur" ? "بل کی صورتحال" : "Bill Status Distribution"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center">
+            <div className="h-72 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={billStatusData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius={70}
+                    outerRadius={95}
                     paddingAngle={5}
                     dataKey="value"
                   >
@@ -408,17 +423,18 @@ const AdminDashboard = () => {
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="flex justify-center gap-6 mt-4">
+            <div className="flex justify-center gap-8 mt-4">
               {billStatusData.map((item, index) => (
-                <div key={index} className="flex items-center gap-2">
+                <div key={index} className="flex items-center gap-2 bg-muted/50 px-4 py-2 rounded-full">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index] }}></div>
-                  <span className="text-sm text-muted-foreground">{item.name}: {item.value}</span>
+                  <span className="text-sm font-medium text-foreground">{item.name}: {item.value}</span>
                 </div>
               ))}
             </div>
@@ -429,29 +445,31 @@ const AdminDashboard = () => {
       {/* Recent Activity & Units Trend */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
+        <Card className="border-border/50 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Clock className="w-4 h-4 text-primary" />
+              </div>
               {language === "ur" ? "حالیہ سرگرمی" : "Recent Activity"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentActivities.length > 0 ? (
                 recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                  <div key={activity.id} className="flex items-start gap-3 p-4 rounded-xl hover:bg-muted/50 transition-all duration-300 border border-transparent hover:border-border/50">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
                       {getActivityIcon(activity.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground truncate">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                      <p className="text-sm text-foreground font-medium truncate">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
+                <p className="text-sm text-muted-foreground text-center py-8">
                   {language === "ur" ? "کوئی حالیہ سرگرمی نہیں" : "No recent activity"}
                 </p>
               )}
@@ -460,32 +478,35 @@ const AdminDashboard = () => {
         </Card>
 
         {/* Units Trend */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-5 h-5 text-primary" />
+        <Card className="border-border/50 shadow-lg">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Zap className="w-4 h-4 text-primary" />
+              </div>
               {language === "ur" ? "یونٹس کا رجحان" : "Units Trend"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                   <Tooltip
                     formatter={(value: number) => [`${value.toLocaleString()} kWh`, language === "ur" ? "یونٹس" : "Units"]}
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
+                      borderRadius: "12px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                     }}
                   />
                   <Bar
                     dataKey="units"
                     fill="hsl(var(--primary))"
-                    radius={[4, 4, 0, 0]}
+                    radius={[8, 8, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>

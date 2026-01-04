@@ -63,6 +63,10 @@ export default {
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         info: "hsl(var(--info))",
+        toggle: {
+          bg: "hsl(var(--toggle-bg))",
+          active: "hsl(var(--toggle-active))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
