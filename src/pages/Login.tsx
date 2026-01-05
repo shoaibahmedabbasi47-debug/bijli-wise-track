@@ -97,23 +97,6 @@ const Login = () => {
     setLoading(false);
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    const { error } = await signIn("demo@bijlitrack.com", "demo123456");
-    setLoading(false);
-
-    if (error) {
-      toast({
-        title: language === "ur" ? "ڈیمو لاگ ان ناکام" : "Demo Login Failed",
-        description: language === "ur" 
-          ? "ڈیمو اسناد سیٹ نہیں ہیں۔ براہ کرم نیا اکاؤنٹ بنائیں۔"
-          : "Demo credentials not set up. Please sign up for a new account.",
-        variant: "destructive",
-      });
-    } else {
-      navigate("/dashboard");
-    }
-  };
 
   return (
     <div className="min-h-screen gradient-bg-radial flex flex-col">
@@ -205,17 +188,6 @@ const Login = () => {
                 {loading ? t("loading") : t("login")}
               </Button>
 
-              {userType === "customer" && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full h-12 rounded-xl text-base font-medium"
-                  onClick={handleDemoLogin}
-                  disabled={loading}
-                >
-                  {t("useDemoCredentials")}
-                </Button>
-              )}
             </form>
 
             {/* Sign Up Link - Only show for customers */}
