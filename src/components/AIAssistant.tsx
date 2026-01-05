@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Languages, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Languages, Loader2, Globe, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -18,7 +18,7 @@ const AIAssistant = () => {
   const [mode, setMode] = useState<"chat" | "translate">("chat");
   const [targetLang, setTargetLang] = useState<"en" | "ur">("ur");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { t, language } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -137,7 +137,7 @@ const AIAssistant = () => {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300",
-          "bg-gradient-to-r from-primary to-primary/80 hover:scale-110",
+          "bg-gradient-to-r from-primary to-primary/80 hover:scale-110 hover:shadow-xl",
           isOpen && "rotate-90"
         )}
       >
@@ -150,27 +150,67 @@ const AIAssistant = () => {
 
       {/* Chat window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 h-[500px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 h-[520px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5">
           {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
-            <h3 className="font-semibold flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              {t("aiAssistant")}
-            </h3>
-            <div className="flex gap-2 mt-2">
+          <div className="p-4 bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Sparkles className="w-5 h-5" />
+                {t("aiAssistant")}
+              </h3>
+              {/* Language Toggle in Chatbot */}
+              <div className="flex items-center gap-1 p-0.5 rounded-xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20">
+                <button
+                  onClick={() => language === "ur" && toggleLanguage()}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300",
+                    language === "en" 
+                      ? "bg-primary-foreground text-primary shadow-sm" 
+                      : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                  )}
+                >
+                  <Globe className="w-3 h-3" />
+                  EN
+                </button>
+                <button
+                  onClick={() => language === "en" && toggleLanguage()}
+                  className={cn(
+                    "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300",
+                    language === "ur" 
+                      ? "bg-primary-foreground text-primary shadow-sm" 
+                      : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                  )}
+                >
+                  <Languages className="w-3 h-3" />
+                  اردو
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 variant={mode === "chat" ? "secondary" : "ghost"}
                 onClick={() => setMode("chat")}
-                className="text-xs"
+                className={cn(
+                  "text-xs rounded-lg transition-all",
+                  mode === "chat" 
+                    ? "bg-primary-foreground text-primary" 
+                    : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                )}
               >
+                <MessageCircle className="w-3 h-3 mr-1" />
                 Chat
               </Button>
               <Button
                 size="sm"
                 variant={mode === "translate" ? "secondary" : "ghost"}
                 onClick={() => setMode("translate")}
-                className="text-xs flex items-center gap-1"
+                className={cn(
+                  "text-xs flex items-center gap-1 rounded-lg transition-all",
+                  mode === "translate" 
+                    ? "bg-primary-foreground text-primary" 
+                    : "text-primary-foreground/70 hover:text-primary-foreground hover:bg-primary-foreground/10"
+                )}
               >
                 <Languages className="w-3 h-3" />
                 {t("translate")}
@@ -180,7 +220,7 @@ const AIAssistant = () => {
                   size="sm"
                   variant="outline"
                   onClick={() => setTargetLang(targetLang === "en" ? "ur" : "en")}
-                  className="text-xs ml-auto"
+                  className="text-xs ml-auto bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/20 rounded-lg"
                 >
                   → {targetLang === "en" ? "English" : "اردو"}
                 </Button>

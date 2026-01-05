@@ -69,7 +69,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
             <span className="font-bold text-foreground">BijliTrack</span>
           </Link>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            <LanguageToggle variant="modern" />
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
@@ -107,7 +107,7 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
         {/* Language Toggle in Sidebar - Desktop */}
         <div className="hidden lg:block px-4 py-3 border-b border-border/50">
-          <LanguageToggle />
+          <LanguageToggle variant="modern" />
         </div>
 
         <nav className="px-4 py-4 space-y-1.5 flex-1">
